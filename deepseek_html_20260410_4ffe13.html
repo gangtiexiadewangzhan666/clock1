@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🎯 三色时钟 · 随机认读 · 匹配挑战</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: system-ui, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f7efe5 0%, #fce3d4 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app-card {
+      max-width: 880px;
+      width: 100%;
+      background: rgba(255, 250, 240, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 56px;
+      box-shadow: 0 25px 40px -10px rgba(0, 20, 30, 0.15);
+      padding: 28px 24px 36px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.2s;
+    }
+
+    /* 三个圆圈 */
+    .circle-panel {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .circle-btn {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: none;
+      box-shadow: 0 12px 18px -6px rgba(0, 0, 0, 0.15), 0 0 0 5px rgba(255, 255, 240, 0.7);
+      cursor: pointer;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8a5c2;
+      letter-spacing: 2px;
+      user-select: none;
+    }
+
+    .circle-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 18px 25px -8px rgba(0,0,0,0.2), 0 0 0 6px rgba(255,255,255,0.9);
+    }
+
+    .circle-btn.pink {
+      background: #ffb3c6;
+      background: linear-gradient(145deg, #ffb6c1, #ff99aa);
+    }
+    .circle-btn.blue {
+      background: #a3d0ff;
+      background: linear-gradient(145deg, #a9d4ff, #7bb3e0);
+    }
+    .circle-btn.yellow {
+      background: #ffe594;
+      background: linear-gradient(145deg, #ffe28c, #fdcb6e);
+      color: #3a2c0f;
+      text-shadow: none;
+    }
+
+    /* 内容区 */
+    .content-stage {
+      background: rgba(255, 250, 240, 0.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border-radius: 48px;
+      padding: 28px 20px 30px;
+      box-shadow: inset 0 2px 6px rgba(255,255,255,0.8), 0 10px 20px -8px rgba(0,0,0,0.1);
+      min-height: 440px;
+    }
+
+    /* 粉色大卡片 */
+    .big-time-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+    }
+
+    .random-time-display {
+      background: #ffe7f0;
+      border-radius: 70px;
+      padding: 40px 60px;
+      box-shadow: 0 16px 0 #d9b0c0, 0 20px 30px -8px rgba(160, 100, 120, 0.2);
+      border: 2px solid #ffdae8;
+      margin: 20px auto;
+      display: inline-block;
+    }
+
+    .random-time-display span {
+      font-size: 5.5rem;
+      font-weight: 800;
+      color: #a13e5c;
+      text-shadow: 4px 4px 0 #fcd9e6;
+      letter-spacing: 6px;
+    }
+
+    .pink-history-badge {
+      color: #785a64;
+      margin-top: 12px;
+      font-size: 1.1rem;
+    }
+
+    .new-random-btn {
+      background: #ffb3c6;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 60px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #5f2e40;
+      box-shadow: 0 6px 0 #b47a8a;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.1s;
+      border: 1px solid #ffe2ed;
+    }
+
+    .new-random-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b47a8a;
+    }
+
+    /* 蓝色布局 */
+    .blue-match-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .clock-canvas {
+      width: 230px;
+      height: 230px;
+      background: #fef9f0;
+      border-radius: 50%;
+      box-shadow: 0 12px 18px -5px rgba(60, 40, 20, 0.2), 0 0 0 6px #ffeacb, inset 0 0 0 2px #f5d5b0;
+      display: block;
+      margin: 0 auto;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    .clock-canvas:active {
+      box-shadow: 0 6px 10px -3px rgba(0,0,0,0.2), 0 0 0 6px #ffdead;
+    }
+
+    .readout-message {
+      min-height: 3rem;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #1e4460;
+      background: #d9e9fa90;
+      padding: 8px 22px;
+      border-radius: 60px;
+      display: inline-block;
+      backdrop-filter: blur(4px);
+      margin: 12px 0;
+      border: 1px solid #bdd6ec;
+    }
+
+    .card-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0 8px;
+      max-width: 600px;
+    }
+
+    .time-card-option {
+      background: #c9e2ff;
+      border-radius: 40px;
+      padding: 10px 18px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      box-shadow: 0 5px 0 #7f9fbf, 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #e1efff;
+      cursor: pointer;
+      transition: 0.1s;
+      user-select: none;
+    }
+
+    .time-card-option:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #7f9fbf, 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .feedback-blue {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin: 12px 0 6px;
+      min-height: 2.8rem;
+    }
+
+    /* 黄色区域 (保留) */
+    .yellow-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .slider-panel {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0 10px;
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: #5e3a1c;
+    }
+
+    .slider-item input {
+      width: 170px;
+    }
+
+    .target-info {
+      background: #f3e1c2;
+      padding: 8px 24px;
+      border-radius: 40px;
+      font-size: 1.3rem;
+      margin: 10px 0;
+    }
+
+    .yellow-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0 5px;
+    }
+
+    .yellow-card {
+      background: #fdebb3;
+      border-radius: 36px;
+      padding: 10px 16px;
+      font-weight: bold;
+      color: #3f2e14;
+      box-shadow: 0 4px 0 #cbae7a, 0 2px 6px rgba(0,0,0,0.05);
+      cursor: pointer;
+      border: 1px solid #ffefc0;
+      transition: 0.1s;
+    }
+
+    .yellow-card.selected {
+      background: #ffd966;
+      box-shadow: 0 2px 0 #b58b3c, 0 4px 10px rgba(0,0,0,0.1);
+      transform: translateY(2px);
+    }
+
+    .footer-note {
+      text-align: center;
+      color: #6b4f2c;
+      margin-top: 16px;
+    }
+
+    button {
+      background: none;
+      border: none;
+    }
+
+    .hint-text {
+      color: #5e4e3c;
+      margin-top: 6px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+<div class="app-card">
+  <!-- 三个圆圈 -->
+  <div class="circle-panel">
+    <button class="circle-btn pink" data-mode="pink">🌸<br>粉</button>
+    <button class="circle-btn blue" data-mode="blue">💧<br>蓝</button>
+    <button class="circle-btn yellow" data-mode="yellow">⭐<br>黄</button>
+  </div>
+
+  <!-- 动态内容区 -->
+  <div id="contentStage" class="content-stage"></div>
+  <div class="footer-note">✨ 粉色·随机卡 (24次不重) · 蓝色·看钟选卡 · 黄色·拨钟挑战</div>
+</div>
+
+<script>
+  (function(){
+    'use strict';
+
+    const stage = document.getElementById('contentStage');
+    let currentMode = 'pink';
+
+    // ---------- 通用时间数据 (整点+半点，1:00~12:30) ----------
+    const allHalfHourTimes = [];
+    for (let h = 1; h <= 12; h++) {
+      allHalfHourTimes.push(`${h}:00`, `${h}:30`);
+    }
+
+    // 解析 "h:mm" 为 {hours, minutes}
+    function parseTime12(str) {
+      const [h, m] = str.split(':').map(Number);
+      return { hours: h, minutes: m };
+    }
+
+    function formatTimeLabel(h, m) {
+      return `${h}:${m.toString().padStart(2, '0')}`;
+    }
+
+    // 中文读法
+    function readableChinese(h, m) {
+      if (m === 0) return `${h}点整`;
+      if (m === 30) return `${h}点半`;
+      return `${h}点${m}分`;
+    }
+
+    // ---------- 粉色专用：随机不重复 (24次内) ----------
+    const recentPinkTimes = [];       // 最多存24个
+    const MAX_HISTORY = 24;
+
+    function getRandomPinkTime() {
+      // 如果历史已满24，移除最早
+      if (recentPinkTimes.length >= MAX_HISTORY) {
+        recentPinkTimes.shift();
+      }
+      const available = allHalfHourTimes.filter(t => !recentPinkTimes.includes(t));
+      if (available.length === 0) {
+        // 理论上不会发生，但以防万一
+        recentPinkTimes.length = 0;
+        return allHalfHourTimes[Math.floor(Math.random() * allHalfHourTimes.length)];
+      }
+      const randomTime = available[Math.floor(Math.random() * available.length)];
+      recentPinkTimes.push(randomTime);
+      return randomTime;
+    }
+
+    // 强制重置历史 (比如手动点击“再来一个”但保持不重复)
+    function getNextPinkWithHistory() {
+      return getRandomPinkTime();
+    }
+
+    // ---------- 蓝色模式状态 ----------
+    let blueCurrentTime = { hours: 12, minutes: 0, label: '12:00' }; // 当前时钟显示的时间
+
+    // 随机生成一个整点/半点
+    function randomHalfHourTime() {
+      const rand = allHalfHourTimes[Math.floor(Math.random() * allHalfHourTimes.length)];
+      return { ...parseTime12(rand), label: rand };
+    }
+
+    // 初始化蓝色时钟为随机
+    function resetBlueClock() {
+      blueCurrentTime = randomHalfHourTime();
+    }
+
+    // ---------- 黄色状态 (保留) ----------
+    let yellowHours = 12;
+    let yellowMinutes = 0;
+    let yellowTarget = null;   // { hours, minutes, label }
+    const yellowTimeOptions = [
+      '8:30', '9:00', '10:15', '10:30', '11:45', '12:30',
+      '2:00', '3:15', '4:45'
+    ];
+
+    // ---------- 绘制时钟 ----------
+    function drawClock(canvas, hours, minutes) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const radius = w / 2;
+      const cx = w/2, cy = h/2;
+      ctx.clearRect(0, 0, w, h);
+
+      // 表盘
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius-4, 0, 2*Math.PI);
+      ctx.fillStyle = '#fef3e2';
+      ctx.fill();
+      ctx.shadowColor = '#d9b382';
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = '#ccaa7a';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // 数字
+      ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = '#4e3620';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i=1; i<=12; i++) {
+        let angle = (i*30 - 90) * Math.PI/180;
+        let nx = cx + Math.cos(angle)*(radius*0.72);
+        let ny = cy + Math.sin(angle)*(radius*0.72);
+        ctx.fillText(i.toString(), nx, ny);
+      }
+
+      // 刻度
+      ctx.fillStyle = '#7b5f3a';
+      for (let i=0; i<60; i++) {
+        let angle = (i*6 - 90)*Math.PI/180;
+        let dx = cx + Math.cos(angle)*(radius*0.85);
+        let dy = cy + Math.sin(angle)*(radius*0.85);
+        ctx.beginPath();
+        ctx.arc(dx, dy, (i%5===0)?3:1.5, 0, 2*Math.PI);
+        ctx.fill();
+      }
+
+      // 时针
+      const hourAngle = ((hours%12)*30 + minutes*0.5 - 90)*Math.PI/180;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(hourAngle)*radius*0.48, cy + Math.sin(hourAngle)*radius*0.48);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#2e3b4e';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // 分针
+      const minAngle = (minutes*6 - 90)*Math.PI/180;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(minAngle)*radius*0.65, cy + Math.sin(minAngle)*radius*0.65);
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#3f5e7a';
+      ctx.stroke();
+
+      // 中心点
+      ctx.beginPath();
+      ctx.arc(cx, cy, 8, 0, 2*Math.PI);
+      ctx.fillStyle = '#56401e';
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#6b4f2c';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, 2*Math.PI);
+      ctx.fillStyle = '#fbeec9';
+      ctx.fill();
+    }
+
+    // ---------- 渲染分发 ----------
+    function renderContent(mode) {
+      if (mode === 'pink') renderPink();
+      else if (mode === 'blue') renderBlue();
+      else if (mode === 'yellow') renderYellow();
+    }
+
+    // ---------- 粉色：随机单张卡片 + 按钮刷新 ----------
+    function renderPink() {
+      stage.innerHTML = '';
+      const container = document.createElement('div');
+      container.className = 'big-time-card';
+
+      const title = document.createElement('div');
+      title.style.fontSize = '1.6rem';
+      title.style.color = '#a13e5c';
+      title.innerText = '🌸 点一点，出现随机时间';
+      container.appendChild(title);
+
+      const displayDiv = document.createElement('div');
+      displayDiv.className = 'random-time-display';
+      const timeSpan = document.createElement('span');
+      displayDiv.appendChild(timeSpan);
+      container.appendChild(displayDiv);
+
+      const historySpan = document.createElement('div');
+      historySpan.className = 'pink-history-badge';
+      
+      const refreshBtn = document.createElement('button');
+      refreshBtn.className = 'new-random-btn';
+      refreshBtn.textContent = '🔄 再来一个时间';
+
+      // 初始化显示一个随机时间 (第一次不记录历史？但应当记录)
+      const firstTime = getNextPinkWithHistory();
+      timeSpan.textContent = firstTime;
+      updateHistoryText();
+
+      function updateHistoryText() {
+        const count = recentPinkTimes.length;
+        historySpan.textContent = `📋 最近${count}次 (24次内不重复)`;
+      }
+
+      refreshBtn.addEventListener('click', () => {
+        const newTime = getNextPinkWithHistory();
+        timeSpan.textContent = newTime;
+        updateHistoryText();
+      });
+
+      container.appendChild(refreshBtn);
+      container.appendChild(historySpan);
+      
+      const tip = document.createElement('div');
+      tip.style.marginTop = '16px';
+      tip.style.color = '#8a6573';
+      tip.textContent = '点击粉色圆圈也会刷新 (连续24次不重复)';
+      container.appendChild(tip);
+
+      stage.appendChild(container);
+    }
+
+    // 覆盖粉色按钮的额外刷新功能（同时保留点击圆圈切换）
+    // 我们会在切换时重新render，但也可以通过监听粉色圆圈额外刷新？不需要，每次点击粉色圆圈都会重新渲染整个粉色界面，会重置历史？需要保证历史是全局的。
+    // 但是每点一次粉色圆圈，我们希望刷新时间（而不是重置历史），所以需要处理：在粉色按钮点击时，不重新调用renderPink整体重建，而是触发刷新逻辑。
+    // 改进：在粉色模式激活时，如果已经处于粉色模式，不重新构建DOM，而是直接调用刷新函数。
+    // 我们重构一下切换逻辑。
+
+    // ---------- 蓝色：看时钟选卡片匹配 ----------
+    function renderBlue() {
+      // 确保蓝色时钟已初始化 (首次进入随机)
+      if (!blueCurrentTime || !blueCurrentTime.label) {
+        resetBlueClock();
+      }
+
+      stage.innerHTML = '';
+      const container = document.createElement('div');
+      container.className = 'blue-match-area';
+
+      const title = document.createElement('div');
+      title.style.fontSize = '1.5rem';
+      title.style.marginBottom = '8px';
+      title.innerHTML = '💙 时钟已显示时间 · 点击下方卡片匹配';
+      container.appendChild(title);
+
+      // 画布
+      const canvas = document.createElement('canvas');
+      canvas.className = 'clock-canvas';
+      canvas.width = 260;
+      canvas.height = 260;
+      drawClock(canvas, blueCurrentTime.hours, blueCurrentTime.minutes);
+      
+      // 点击时钟可听认读（辅助）
+      const readoutDiv = document.createElement('div');
+      readoutDiv.className = 'readout-message';
+      readoutDiv.textContent = `🕒 点击时钟听读法`;
+
+      canvas.addEventListener('click', () => {
+        readoutDiv.textContent = `⏰ ${readableChinese(blueCurrentTime.hours, blueCurrentTime.minutes)}  (${blueCurrentTime.label})`;
+      });
+
+      container.appendChild(canvas);
+      container.appendChild(readoutDiv);
+
+      // 反馈区
+      const feedback = document.createElement('div');
+      feedback.className = 'feedback-blue';
+      feedback.id = 'blueFeedback';
+      feedback.textContent = '👇 选择一个时间卡片';
+      container.appendChild(feedback);
+
+      // 卡片列表 (所有整点半点)
+      const cardStrip = document.createElement('div');
+      cardStrip.className = 'card-strip';
+
+      allHalfHourTimes.forEach(timeStr => {
+        const card = document.createElement('div');
+        card.className = 'time-card-option';
+        card.textContent = timeStr;
+        card.addEventListener('click', () => {
+          const selected = parseTime12(timeStr);
+          const current = blueCurrentTime;
+          if (selected.hours === current.hours && selected.minutes === current.minutes) {
+            // 正确！
+            feedback.innerHTML = `✅ 完全正确！ 太棒了！ 🎉`;
+            feedback.style.color = '#1f6c3b';
+            // 生成新的随机时间
+            resetBlueClock();
+            drawClock(canvas, blueCurrentTime.hours, blueCurrentTime.minutes);
+            readoutDiv.textContent = `🔄 新时钟 · 点击时钟听读法`;
+            // 也可以延迟恢复反馈文字
+            setTimeout(() => {
+              if (feedback) feedback.innerHTML = `✨ 正确！再来一题 ✨`;
+            }, 600);
+          } else {
+            feedback.innerHTML = `❌ 不对哦，再试试看 (当前 ${current.label})`;
+            feedback.style.color = '#b13e3e';
+          }
+        });
+        cardStrip.appendChild(card);
+      });
+
+      container.appendChild(cardStrip);
+      
+      const hint = document.createElement('div');
+      hint.className = 'hint-text';
+      hint.textContent = '💡 匹配时钟显示的时间，正确后自动换新题';
+      container.appendChild(hint);
+
+      stage.appendChild(container);
+    }
+
+    // ---------- 黄色 (保持原样) ----------
+    function renderYellow() {
+      stage.innerHTML = '';
+      const container = document.createElement('div');
+      container.className = 'yellow-layout';
+
+      const title = document.createElement('div');
+      title.style.fontSize = '1.6rem';
+      title.style.marginBottom = '8px';
+      title.innerHTML = '⭐ 拨动指针 · 挑战正确时间';
+      container.appendChild(title);
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'clock-canvas';
+      canvas.width = 280;
+      canvas.height = 280;
+      drawClock(canvas, yellowHours, yellowMinutes);
+      container.appendChild(canvas);
+
+      const sliderPanel = document.createElement('div');
+      sliderPanel.className = 'slider-panel';
+
+      const hourDiv = document.createElement('div');
+      hourDiv.className = 'slider-item';
+      hourDiv.innerHTML = `<span>时针 (1~12)</span>`;
+      const hourSlider = document.createElement('input');
+      hourSlider.type = 'range';
+      hourSlider.min = 1;
+      hourSlider.max = 12;
+      hourSlider.value = yellowHours;
+      hourSlider.step = 1;
+      const hourVal = document.createElement('span');
+      hourVal.textContent = yellowHours;
+      hourDiv.appendChild(hourSlider);
+      hourDiv.appendChild(hourVal);
+
+      const minDiv = document.createElement('div');
+      minDiv.className = 'slider-item';
+      minDiv.innerHTML = `<span>分针 (0~59)</span>`;
+      const minSlider = document.createElement('input');
+      minSlider.type = 'range';
+      minSlider.min = 0;
+      minSlider.max = 59;
+      minSlider.value = yellowMinutes;
+      minSlider.step = 1;
+      const minVal = document.createElement('span');
+      minVal.textContent = yellowMinutes;
+      minDiv.appendChild(minSlider);
+      minDiv.appendChild(minVal);
+
+      sliderPanel.appendChild(hourDiv);
+      sliderPanel.appendChild(minDiv);
+      container.appendChild(sliderPanel);
+
+      const targetDisplay = document.createElement('div');
+      targetDisplay.className = 'target-info';
+      targetDisplay.id = 'yellowTargetDisplay';
+      targetDisplay.textContent = yellowTarget ? `🎯 目标: ${yellowTarget.label}` : '⚡ 请点击下方卡片选择目标时间';
+
+      const feedbackDiv = document.createElement('div');
+      feedbackDiv.className = 'feedback';
+      feedbackDiv.id = 'yellowFeedback';
+
+      container.appendChild(targetDisplay);
+      container.appendChild(feedbackDiv);
+
+      const cardsWrapper = document.createElement('div');
+      cardsWrapper.className = 'yellow-cards';
+
+      yellowTimeOptions.forEach(timeStr => {
+        const card = document.createElement('div');
+        card.className = `yellow-card ${(yellowTarget && yellowTarget.label === timeStr) ? 'selected' : ''}`;
+        card.textContent = timeStr;
+        card.addEventListener('click', () => {
+          const parsed = parseTime12(timeStr);
+          yellowTarget = { hours: parsed.hours, minutes: parsed.minutes, label: timeStr };
+          renderYellow();
+        });
+        cardsWrapper.appendChild(card);
+      });
+      container.appendChild(cardsWrapper);
+
+      const tip = document.createElement('div');
+      tip.style.marginTop = '12px';
+      tip.style.color = '#7b5a3a';
+      tip.textContent = '🎚️ 拖动滑块拨动指针，匹配目标时间即成功';
+      container.appendChild(tip);
+
+      stage.appendChild(container);
+
+      // 滑块事件
+      function updateYellow() {
+        yellowHours = parseInt(hourSlider.value, 10);
+        yellowMinutes = parseInt(minSlider.value, 10);
+        hourVal.textContent = yellowHours;
+        minVal.textContent = yellowMinutes;
+        drawClock(canvas, yellowHours, yellowMinutes);
+
+        if (yellowTarget) {
+          if (yellowHours === yellowTarget.hours && yellowMinutes === yellowTarget.minutes) {
+            feedbackDiv.innerHTML = '✅ 完全正确！ 太棒了！ 🎉';
+            targetDisplay.textContent = `🎯 目标: ${yellowTarget.label} ✔️`;
+          } else {
+            feedbackDiv.innerHTML = `⏳ 当前 ${formatTimeLabel(yellowHours, yellowMinutes)} ，再试试看`;
+            targetDisplay.textContent = `🎯 目标: ${yellowTarget.label}`;
+          }
+        } else {
+          feedbackDiv.innerHTML = '👆 请先选择一个时间卡片';
+        }
+      }
+
+      hourSlider.addEventListener('input', updateYellow);
+      minSlider.addEventListener('input', updateYellow);
+      updateYellow();
+    }
+
+    // ---------- 按钮切换逻辑 (保持状态) ----------
+    const pinkBtn = document.querySelector('.circle-btn.pink');
+    const blueBtn = document.querySelector('.circle-btn.blue');
+    const yellowBtn = document.querySelector('.circle-btn.yellow');
+
+    function switchMode(mode) {
+      currentMode = mode;
+      if (mode === 'pink') {
+        renderPink();
+      } else if (mode === 'blue') {
+        // 如果当前不是蓝色模式，重新初始化蓝色时钟
+        if (currentMode !== 'blue') {
+          resetBlueClock();
+        }
+        renderBlue();
+      } else if (mode === 'yellow') {
+        renderYellow();
+      }
+    }
+
+    pinkBtn.addEventListener('click', () => {
+      if (currentMode === 'pink') {
+        // 已在粉色模式：点击粉色圆圈刷新随机时间（模拟点击刷新按钮）
+        const refreshBtn = stage.querySelector('.new-random-btn');
+        if (refreshBtn) refreshBtn.click();
+      } else {
+        switchMode('pink');
+      }
+    });
+
+    blueBtn.addEventListener('click', () => switchMode('blue'));
+    yellowBtn.addEventListener('click', () => switchMode('yellow'));
+
+    // 初始化粉色
+    switchMode('pink');
+  })();
+</script>
+</body>
+</html>
